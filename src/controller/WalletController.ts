@@ -19,9 +19,7 @@ export class WalletController {
     const transactionRepository =
       AppDataSource.getRepository(WalletTransaction);
     return await transactionRepository.find({
-      order: {
-        createdAt: "DESC",
-      },
+      order: {},
     });
   }
 }
