@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
 import { AppDataSource } from "./data-source";
 import { WalletController } from "./controller/WalletController";
+// import axios from 'axios';
 
 const SERVER_PORT = 3000;
 const server = express();
@@ -24,6 +25,19 @@ server.get("/wallet/statement", async (_: Request, response: Response) => {
   const statement = await walletController.getStatement();
   return response.status(200).json(statement);
 });
+
+// server.get("/wallet", async (_: Request, response: Response) => {
+//   const walletController = new WalletController();
+//   const sumAmount = await walletController.getStatement();
+//   return response.status(200).json(sumAmount);
+// });
+
+server.get("/wallet/sumAmountBRL", async (_: Request, response: Response) => {
+  const walletController = new WalletController();
+  const sumAmountBRL = await walletController.getSumAmountBRL();
+  return response.status(200).json({ sumAmountBRL });
+});
+
 
 AppDataSource.initialize()
   .then(async () => {

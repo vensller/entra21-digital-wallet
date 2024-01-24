@@ -6,9 +6,9 @@ export class WalletTransaction {
   id: number;
   @Column()
   currency: string;
-  @Column()
+  @Column("decimal")
   amount: number;
-  @Column()
+  @Column("decimal")
   amountBRL: number;
   @Column()
   isCredit: boolean;
