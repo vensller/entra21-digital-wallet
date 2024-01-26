@@ -1,25 +1,27 @@
 import { AppDataSource } from "../data-source";
-import { WalletTransaction } from "../model/WalletTransaction";
+import { WalletDTO } from "../dto/WalletDTO";
+import { Wallet } from "../model/Wallet";
 
 export class WalletController {
-  async createTransaction(currency: string, amount: number, isCredit: boolean) {
-    const transactionRepository =
-      AppDataSource.getRepository(WalletTransaction);
-    const transaction = new WalletTransaction();
-    transaction.amount = amount;
-    transaction.amountBRL = amount;
-    transaction.isCredit = isCredit;
-    transaction.currency = currency;
-    transaction.createdAt = new Date();
-    const savedTransaction = await transactionRepository.save(transaction);
-    return savedTransaction;
-  }
+    constructor() {
 
-  async getStatement() {
-    const transactionRepository =
-      AppDataSource.getRepository(WalletTransaction);
-    return await transactionRepository.find({
-      order: {},
-    });
-  }
+    }
+
+    async getWallets() {
+        const walletRepository = AppDataSource.getRepository(Wallet);
+        const walletList = await walletRepository.find({relations:{
+            user: true,
+            currency: true
+        }});
+
+        return walletList.map((wallet: Wallet) => WalletDTO.fromModel(wallet));
+    }
+
+    async createWallet(walletDTO: WalletDTO) {
+        const walletRepository = AppDataSource.getRepository(Wallet);
+        const newWallet = walletDTO.toModel();
+        const savedWallet = await walletRepository.save(newWallet);
+
+        return WalletDTO.fromModel(savedWallet);
+    }
 }
