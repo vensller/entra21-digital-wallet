@@ -72,6 +72,15 @@ server.get(
   }
 );
 
+
+server.get("/wallet/amount", async (_: Request, response: Response) => {
+  const walletController = new WalletController();
+  const amoutBRL = await walletController.getAmount();
+  return response.status(200).json(amoutBRL);
+});
+
+
+
 AppDataSource.initialize()
   .then(async () => {
     console.log("Banco de dados inicializado...");
