@@ -100,11 +100,8 @@ export class WalletTransactionController {
       const statement = statementList[i];
 
       let amountInCurrency = await convertCurrencys(statement.currency.id, currencyId, statement.amount)
-      console.log('amountInCurrency', amountInCurrency);
-      console.log('amountList', amountList);
       
       amountList.push(amountInCurrency)
-      
     }
 
     let statementInCurrency: WalletTransaction = {
