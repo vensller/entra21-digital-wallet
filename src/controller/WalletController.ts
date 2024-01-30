@@ -72,6 +72,7 @@ export class WalletController {
       const transactions = await transactionRepository.find();
       const allTransactions = transactions.filter(transaction => transaction.currency);
 
+      
       let totalAmountBRL = 0;
 
       for (const transaction of allTransactions) {
