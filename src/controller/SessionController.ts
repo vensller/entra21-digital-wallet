@@ -1,9 +1,12 @@
 import { AppDataSource } from "../data-source";
 import { User } from "../model/User";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 
 const SECRET_KEY = "minha-senha-ultra-secreta";
+interface DecodedTokenPayLoad extends JwtPayload {
+  userId: number;
+}
 
 export class SessionController {
   async login(email: string, password: string) {
@@ -34,8 +37,9 @@ export class SessionController {
     }
 
     try {
-      const jwtPayload = jwt.verify(token, SECRET_KEY);
+      const jwtPayload = jwt.verify(token, SECRET_KEY) as DecodedTokenPayLoad;
       console.log(jwtPayload);
+      return jwtPayload;
     } catch (error) {
       throw new Error("Token inválido");
     }
