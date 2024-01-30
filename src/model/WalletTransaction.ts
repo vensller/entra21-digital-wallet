@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { User } from "./User";
 
 @Entity()
 export class WalletTransaction {
@@ -6,12 +7,14 @@ export class WalletTransaction {
   id: number;
   @Column()
   currency: string;
-  @Column()
+  @Column('decimal')
   amount: number;
-  @Column()
+  @Column('decimal')
   amountBRL: number;
   @Column()
   isCredit: boolean;
   @Column()
   createdAt: Date;
+  @ManyToOne(() => User, (user) => user.id)
+  user: User;
 }
