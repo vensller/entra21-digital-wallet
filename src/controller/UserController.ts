@@ -1,3 +1,5 @@
+// UserController.ts
+
 import { AppDataSource } from "../data-source";
 import { User } from "../model/User";
 import bcrypt from "bcrypt";
@@ -19,4 +21,7 @@ export class UserController {
     user.password = await bcrypt.hash(password, 10);
     return await userRepository.save(user);
   }
-}
+
+
+  }
+
