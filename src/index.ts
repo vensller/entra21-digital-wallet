@@ -4,6 +4,7 @@ import { WalletController } from "./controller/WalletController";
 import { UserController } from "./controller/UserController";
 import { SessionController } from "./controller/SessionController";
 
+
 const SERVER_PORT = 3000;
 const server = express();
 server.use(express.json());
@@ -73,11 +74,49 @@ server.get(
 );
 
 
-server.get("/wallet/amount", async (_: Request, response: Response) => {
-  const walletController = new WalletController();
-  const amoutBRL = await walletController.getAmount();
-  return response.status(200).json(amoutBRL);
+
+server.get("/user/:userId/transactions", async (request: Request, response: Response) => {
+  try {
+    const token = request.headers.authorization?.split(" ")[1];
+
+    const sessionController = new SessionController();
+    sessionController.verifyToken(token);
+
+    const userIdParam = request.params.userId;
+    console.log('Valor do userIdParam:', userIdParam);
+
+   
+    const userId = Number(userIdParam);
+    console.log('Tipo do userId (antes da conversão):', typeof userId);
+
+    if (isNaN(userId) || !Number.isInteger(userId)) {
+      return response.status(400).json({
+        error: 'O parâmetro userId não é um número válido.',
+        receivedValue: userIdParam,
+      });
+    }
+
+    console.log('Valor do userId (após a conversão):', userId);
+
+    const walletController = new WalletController();
+    const transactions = await walletController.getTransactionsByUserId(userId);
+    return response.status(200).json(transactions);
+  } catch (error) {
+    console.error('Erro em rota /user/:userId/transactions:', error.message);
+    return response.status(500).json({
+      error: 'Erro interno do servidor ao buscar transações do usuário.',
+    });
+  }
 });
+
+server.use((req, res, next) => {
+  console.log('URL requisitada:', req.url);
+  console.log('Parâmetros:', req.params);
+  next();
+});
+
+
+
 
 
 
@@ -89,3 +128,5 @@ AppDataSource.initialize()
     });
   })
   .catch((error) => console.log(error));
+
+ 
