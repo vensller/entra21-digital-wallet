@@ -38,7 +38,6 @@ export class SessionController {
 
     try {
       const jwtPayload = jwt.verify(token, SECRET_KEY) as DecodedTokenPayLoad;
-      console.log(jwtPayload);
       return jwtPayload;
     } catch (error) {
       throw new Error("Token inválido");

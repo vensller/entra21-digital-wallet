@@ -22,6 +22,5 @@ export class WalletTransaction {
   @Column()
   createdAt: Date;
   @ManyToOne(() => User, (user) => user.transactions)
-  @JoinTable()
   user: User;
 }

@@ -17,7 +17,9 @@ export class User {
   email: string;
   @Column()
   password: string;
-  @OneToMany(() => WalletTransaction, (WalletTransaction) => WalletTransaction.user)
-  @JoinColumn()
+  @OneToMany(
+    () => WalletTransaction,
+    (WalletTransaction) => WalletTransaction.user
+  )
   transactions: WalletTransaction[];
 }
