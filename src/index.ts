@@ -44,13 +44,25 @@ server.post("/user", async (request: Request, response: Response) => {
 server.post(
   "/wallet/transaction",
   async (request: Request, response: Response) => {
-    const walletController = new WalletController();
-    const transaction = await walletController.createTransaction(
-      request.body.currency,
-      request.body.amount,
-      request.body.isCredit
-    );
-    return response.status(201).json(transaction);
+    try {
+      const token = request.headers.authorization?.split(" ")[1];
+      const sessionController = new SessionController();
+      const jwtPayload = sessionController.verifyToken(token);
+      const userId = jwtPayload.userId;
+
+      const walletController = new WalletController();
+      const transaction = await walletController.createTransaction(
+        request.body.currency,
+        request.body.amount,
+        request.body.isCredit,
+        userId
+      );
+      return response.status(201).json(transaction);
+    } catch (error) {
+      return response.status(401).json({
+        error: error.message,
+      });
+    }
   }
 );
 
@@ -61,25 +73,35 @@ server.get(
       const token = request.headers.authorization?.split(" ")[1];
       const sessionController = new SessionController();
       sessionController.verifyToken(token);
+      const jwtPayload = sessionController.verifyToken(token);
+      const userId = jwtPayload.userId;
+      const walletController = new WalletController();
+      const statement = await walletController.getStatement(userId);
+      return response.status(200).json(statement);
     } catch (error) {
       return response.status(401).json({
         error: error.message,
       });
     }
-    const walletController = new WalletController();
-    const statement = await walletController.getStatement();
-    return response.status(200).json(statement);
   }
 );
 
-
-server.get("/wallet/amount", async (_: Request, response: Response) => {
-  const walletController = new WalletController();
-  const amoutBRL = await walletController.getAmount();
-  return response.status(200).json(amoutBRL);
+server.get("/wallet/amount", async (request: Request, response: Response) => {
+  try {
+    const token = request.headers.authorization?.split(" ")[1];
+    const sessionController = new SessionController();
+    sessionController.verifyToken(token);
+    const jwtPayload = sessionController.verifyToken(token);
+    const userId = jwtPayload.userId;
+    const walletController = new WalletController();
+    const amoutBRL = await walletController.getAmount(userId);
+    return response.status(200).json(amoutBRL);
+  } catch (error) {
+    return response.status(401).json({
+      error: error.message,
+    });
+  }
 });
-
-
 
 AppDataSource.initialize()
   .then(async () => {

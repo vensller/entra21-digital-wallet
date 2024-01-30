@@ -1,6 +1,7 @@
 import { AppDataSource } from "../data-source";
 import { User } from "../model/User";
 import bcrypt from "bcrypt";
+import { WalletTransaction } from "../model/WalletTransaction";
 
 export class UserController {
   async createUser(name: string, email: string, password: string) {
@@ -17,6 +18,7 @@ export class UserController {
     user.name = name;
     user.email = email;
     user.password = await bcrypt.hash(password, 10);
+  
     return await userRepository.save(user);
   }
 }
