@@ -18,9 +18,7 @@ export class AuthenticationMiddleware {
       (request as AuthenticatedRequest).userId = jwtPayload.userId;
       next();
     } catch (error) {
-      return response.status(401).json({
-        error: error.message,
-      });
+      next(error);
     }
   }
 }

@@ -1,4 +1,5 @@
 import { AppDataSource } from "../data-source";
+import { UnauthorizedException } from "../exceptions/UnauthorizedException";
 import { User } from "../model/User";
 import bcrypt from "bcrypt";
 import jwt, { JwtPayload } from "jsonwebtoken";
@@ -33,14 +34,14 @@ export class SessionController {
 
   verifyToken(token?: string) {
     if (!token) {
-      throw new Error("Usuário não está autenticado");
+      throw new UnauthorizedException();
     }
 
     try {
       const jwtPayload = jwt.verify(token, SECRET_KEY) as DecodedTokenPayLoad;
       return jwtPayload;
     } catch (error) {
-      throw new Error("Token inválido");
+      throw new UnauthorizedException();
     }
   }
 }

@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express, { NextFunction, Request, Response } from "express";
 import { AppDataSource } from "./data-source";
 import { WalletController } from "./controller/WalletController";
 import { UserController } from "./controller/UserController";
@@ -7,27 +7,32 @@ import {
   AuthenticatedRequest,
   AuthenticationMiddleware,
 } from "./middleware/AuthenticationMiddleware";
+import { BaseHttpException } from "./exceptions/BaseHttpException";
+import RouteExecutor from "./routes/RouteExecutor";
 
 const SERVER_PORT = 3000;
 const server = express();
 server.use(express.json());
 
-server.post("/login", async (request: Request, response: Response) => {
-  const sessionController = new SessionController();
-  try {
-    const token = await sessionController.login(
-      request.body.email,
-      request.body.password
-    );
-    return response.status(200).json({
-      token,
-    });
-  } catch (e) {
-    return response.status(400).json({
-      error: e.message,
-    });
-  }
-});
+server.post(
+  "/login",
+  (request: Request, response: Response, next: NextFunction) =>
+    RouteExecutor(
+      request,
+      response,
+      next,
+      async (request: Request, response: Response) => {
+        const sessionController = new SessionController();
+        const token = await sessionController.login(
+          request.body.email,
+          request.body.password
+        );
+        return response.status(200).json({
+          token,
+        });
+      }
+    )
+);
 
 server.post("/user", async (request: Request, response: Response) => {
   const userController = new UserController();
@@ -80,6 +85,21 @@ server.get(
     const walletController = new WalletController();
     const amoutBRL = await walletController.getAmount(userId);
     return response.status(200).json(amoutBRL);
+  }
+);
+
+server.use(
+  (err: Error, request: Request, response: Response, next: NextFunction) => {
+    const exception = err as BaseHttpException;
+
+    if (exception.statusCode) {
+      return response.status(exception.statusCode).json({
+        error: exception.message,
+        errorCode: exception.errorCode,
+      });
+    }
+
+    return response.status(500).json({ error: exception.message });
   }
 );
 
