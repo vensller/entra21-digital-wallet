@@ -78,6 +78,20 @@ server.get(
   }
 );
 
+server.post(
+  "/wallet/:id/reverse",
+  async (request: AuthenticatedRequest, response: Response) => {
+    const userId = request.userId;
+    const id = Number(request.params.id);
+    const walletController = new WalletController();
+    const amoutBRL = await walletController.reverseTransaction(
+      userId, 
+      id
+      );
+    return response.status(200).json(amoutBRL);
+  }
+);
+
 server.use(
   (err: Error, request: Request, response: Response, next: NextFunction) => {
     const exception = err as BaseHttpException;

@@ -7,6 +7,7 @@ import { SessionController } from "./SessionController";
 import { User } from "../model/User";
 import { UnexchangeableRateException } from "../exceptions/UnexchangeableRateException";
 import { UnauthorizedTransactionException } from "../exceptions/UnauthorizedTransactionException";
+import { UnreversibleTransactionException } from "../exceptions/UnreversibleTransactionException";
 
 export class WalletController {
   async fetchExchangeRates(currency: string) {
@@ -113,5 +114,25 @@ export class WalletController {
       console.error("Error in getAmount");
       throw error;
     }
+  }
+
+  async reverseTransaction(userId: number, id: number) {
+    const userStatements = await this.getStatement(userId);
+    const foundStatement = userStatements.find(
+      (WalletTransaction) => WalletTransaction.id == id
+    );
+    console.log(foundStatement);
+    if (foundStatement) {
+      this.createTransaction(
+        foundStatement.currency,
+        foundStatement.amount,
+        !foundStatement.isCredit,
+        userId
+      );
+    } else if (!foundStatement) {
+      throw new UnreversibleTransactionException();
+    }
+    // find dentro de userStatements para localizar a transação por id, se existe,
+    // executar contrário de isCredit, se não existe, retornar erro
   }
 }
