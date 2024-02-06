@@ -81,7 +81,12 @@ export class WalletController {
           transaction.currency,
           transaction.amount
         );
-        totalAmountBRL += totalBRLAmount;
+
+        if (transaction.isCredit == true) {
+          totalAmountBRL += totalBRLAmount;
+        } else if (transaction.isCredit == false) {
+          totalAmountBRL -= totalBRLAmount;
+        }
       }
 
       return Number(totalAmountBRL.toFixed(2));
