@@ -1,4 +1,5 @@
 import { AppDataSource } from "../data-source";
+import { NonexistentUserException } from "../exceptions/NonexistentUserException";
 import { UnauthorizedException } from "../exceptions/UnauthorizedException";
 import { User } from "../model/User";
 import bcrypt from "bcrypt";
@@ -15,13 +16,13 @@ export class SessionController {
     const user = await userRepository.findOneBy({ email });
 
     if (!user) {
-      throw new Error("Usuário ou senha inválidos");
+      throw new NonexistentUserException();
     }
 
     const validPassword = await bcrypt.compare(password, user.password);
 
     if (!validPassword) {
-      throw new Error("Usuário ou senha inválidos");
+      throw new NonexistentUserException();
     }
 
     return jwt.sign(
