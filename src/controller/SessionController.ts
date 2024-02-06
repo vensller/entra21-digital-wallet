@@ -1,5 +1,6 @@
 import { AppDataSource } from "../data-source";
 import { UnauthorizedException } from "../exceptions/UnauthorizedException";
+import { UserNotFoundException } from "../exceptions/UserNotFoundException";
 import { User } from "../model/User";
 import bcrypt from "bcrypt";
 import jwt, { JwtPayload } from "jsonwebtoken";
@@ -15,13 +16,13 @@ export class SessionController {
     const user = await userRepository.findOneBy({ email });
 
     if (!user) {
-      throw new Error("Usuário ou senha inválidos");
+      throw new UserNotFoundException();
     }
 
     const validPassword = await bcrypt.compare(password, user.password);
 
     if (!validPassword) {
-      throw new Error("Usuário ou senha inválidos");
+      throw new UserNotFoundException();
     }
 
     return jwt.sign(

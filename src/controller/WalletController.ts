@@ -5,6 +5,8 @@ import { log } from "console";
 import { Session } from "inspector";
 import { SessionController } from "./SessionController";
 import { User } from "../model/User";
+import { UnexchangeableRateException } from "../exceptions/UnexchangeableRateException";
+import { UnauthorizedTransactionException } from "../exceptions/UnauthorizedTransactionException";
 
 export class WalletController {
   async fetchExchangeRates(currency: string) {
@@ -21,10 +23,10 @@ export class WalletController {
           return parseFloat(exchangedRate);
         }
         if (!exchangedRate) {
-          throw new Error(`Conversion rate not available for ${currency}.`);
+          throw new UnexchangeableRateException();
         }
       } catch (error) {
-        throw new Error(`Failed to fetch exchange rates: ${error}`);
+        throw new UnexchangeableRateException();
       }
   }
 
@@ -35,20 +37,36 @@ export class WalletController {
       const convertedAmount = amount * exchangedRate;
       return Number(convertedAmount.toFixed(2));
     } else {
-      throw new Error(`Conversion rate not available for ${currency}`);
+      throw new UnexchangeableRateException();
     }
   }
 
-  async createTransaction(currency: string, amount: number, isCredit: boolean, userId: any) {
+  async createTransaction(
+    currency: string,
+    amount: number,
+    isCredit: boolean,
+    userId: any
+  ) {
     const transactionRepository =
       AppDataSource.getRepository(WalletTransaction);
+    const convertedAmountBRL: number = await this.convertCurrency(
+      currency,
+      amount
+    );
     const transaction = new WalletTransaction();
     transaction.amount = amount;
-    transaction.amountBRL = await this.convertCurrency(currency, amount);
+    transaction.amountBRL = convertedAmountBRL;
     transaction.isCredit = isCredit;
     transaction.currency = currency;
     transaction.createdAt = new Date();
     transaction.user = userId;
+
+    if (isCredit == false) {
+      const currentAmout = this.getAmount(userId);
+      if ((await currentAmout) < convertedAmountBRL) {
+        throw new UnauthorizedTransactionException();
+      }
+    }
 
     const savedTransaction = await transactionRepository.save(transaction);
     return savedTransaction;
@@ -58,7 +76,7 @@ export class WalletController {
     const transactionRepository =
       AppDataSource.getRepository(WalletTransaction);
     return await transactionRepository.find({
-      where: {user: {id: userId}},
+      where: { user: { id: userId } },
       order: {},
     });
   }
@@ -69,7 +87,8 @@ export class WalletController {
 
     try {
       const transactions = await transactionRepository.find({
-        where: {user: {id: userId}}});
+        where: { user: { id: userId } },
+      });
       const allTransactions = transactions.filter(
         (transaction) => transaction.currency
       );
@@ -81,7 +100,12 @@ export class WalletController {
           transaction.currency,
           transaction.amount
         );
-        totalAmountBRL += totalBRLAmount;
+
+        if (transaction.isCredit == true) {
+          totalAmountBRL += totalBRLAmount;
+        } else if (transaction.isCredit == false) {
+          totalAmountBRL -= totalBRLAmount;
+        }
       }
 
       return Number(totalAmountBRL.toFixed(2));
