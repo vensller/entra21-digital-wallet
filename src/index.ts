@@ -8,7 +8,8 @@ import {
   AuthenticationMiddleware,
 } from "./middleware/AuthenticationMiddleware";
 import { BaseHttpException } from "./exceptions/BaseHttpException";
-import RouteExecutor from "./routes/RouteExecutor";
+import "express-async-errors";
+import { request } from "http";
 
 const SERVER_PORT = 3000;
 const server = express();
@@ -16,22 +17,16 @@ server.use(express.json());
 
 server.post(
   "/login",
-  (request: Request, response: Response, next: NextFunction) =>
-    RouteExecutor(
-      request,
-      response,
-      next,
-      async (request: Request, response: Response) => {
-        const sessionController = new SessionController();
-        const token = await sessionController.login(
-          request.body.email,
-          request.body.password
-        );
-        return response.status(200).json({
-          token,
-        });
-      }
-    )
+  async (request: Request, response: Response, next: NextFunction) => {
+    const sessionController = new SessionController();
+    const token = await sessionController.login(
+      request.body.email,
+      request.body.password
+    );
+    return response.status(200).json({
+      token,
+    });
+  }
 );
 
 server.post("/user", async (request: Request, response: Response) => {
@@ -84,6 +79,17 @@ server.get(
     const userId = request.userId;
     const walletController = new WalletController();
     const amoutBRL = await walletController.getAmount(userId);
+    return response.status(200).json(amoutBRL);
+  }
+);
+
+server.post(
+  "/wallet/:id/refound",
+  async (request: AuthenticatedRequest, response: Response) => {
+    const userId = request.userId;
+    const transactionId = Number(request.params.id);
+    const walletController = new WalletController();
+    const amoutBRL = await walletController.refoundTransaction(userId, transactionId);
     return response.status(200).json(amoutBRL);
   }
 );
