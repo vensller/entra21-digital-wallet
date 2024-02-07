@@ -84,10 +84,7 @@ server.post(
     const userId = request.userId;
     const id = Number(request.params.id);
     const walletController = new WalletController();
-    const amoutBRL = await walletController.reverseTransaction(
-      userId, 
-      id
-      );
+    const amoutBRL = await walletController.reverseTransaction(userId, id);
     return response.status(200).json(amoutBRL);
   }
 );

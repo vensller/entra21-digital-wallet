@@ -1,13 +1,12 @@
 import axios from "axios";
 import { AppDataSource } from "../data-source";
 import { WalletTransaction } from "../model/WalletTransaction";
-import { log } from "console";
-import { Session } from "inspector";
-import { SessionController } from "./SessionController";
-import { User } from "../model/User";
 import { UnexchangeableRateException } from "../exceptions/UnexchangeableRateException";
 import { UnauthorizedTransactionException } from "../exceptions/UnauthorizedTransactionException";
 import { UnreversibleTransactionException } from "../exceptions/UnreversibleTransactionException";
+import { TransactionNotFoundException } from "../exceptions/TransactionNotFoundException";
+import moment from "moment";
+import { ExpiredTransactionException } from "../exceptions/ExpiredTransactionException";
 
 export class WalletController {
   async fetchExchangeRates(currency: string) {
@@ -34,12 +33,11 @@ export class WalletController {
   async convertCurrency(currency: string, amount: number): Promise<number> {
     const exchangedRate = await this.fetchExchangeRates(currency);
 
-    if (exchangedRate) {
-      const convertedAmount = amount * exchangedRate;
-      return Number(convertedAmount.toFixed(2));
-    } else {
+    if (!exchangedRate) {
       throw new UnexchangeableRateException();
     }
+    const convertedAmount = amount * exchangedRate;
+    return Number(convertedAmount.toFixed(2));
   }
 
   async createTransaction(
@@ -54,13 +52,6 @@ export class WalletController {
       currency,
       amount
     );
-    const transaction = new WalletTransaction();
-    transaction.amount = amount;
-    transaction.amountBRL = convertedAmountBRL;
-    transaction.isCredit = isCredit;
-    transaction.currency = currency;
-    transaction.createdAt = new Date();
-    transaction.user = userId;
 
     if (isCredit == false) {
       const currentAmout = this.getAmount(userId);
@@ -68,6 +59,13 @@ export class WalletController {
         throw new UnauthorizedTransactionException();
       }
     }
+    const transaction = new WalletTransaction();
+    transaction.amount = amount;
+    transaction.amountBRL = convertedAmountBRL;
+    transaction.isCredit = isCredit;
+    transaction.currency = currency;
+    transaction.createdAt = new Date();
+    transaction.user = userId;
 
     const savedTransaction = await transactionRepository.save(transaction);
     return savedTransaction;
@@ -121,18 +119,32 @@ export class WalletController {
     const foundStatement = userStatements.find(
       (WalletTransaction) => WalletTransaction.id == id
     );
-    console.log(foundStatement);
-    if (foundStatement) {
+    if (!foundStatement) {
+      throw new TransactionNotFoundException();
+    }
+    if (foundStatement.isReversed == true) {
+      throw new UnreversibleTransactionException();
+    }
+    if (foundStatement && !foundStatement.isReversed) {
+      const createdAtTransaction: moment.Moment = moment(
+        foundStatement.createdAt
+      );
+      const expiredTransaction = moment().subtract(1, "days");
+
+      if (createdAtTransaction.isBefore(expiredTransaction)) {
+        throw new ExpiredTransactionException();
+      }
+      foundStatement.isReversed = true;
+      const transactionRepository =
+        AppDataSource.getRepository(WalletTransaction);
+      await transactionRepository.save(foundStatement);
+
       this.createTransaction(
         foundStatement.currency,
         foundStatement.amount,
         !foundStatement.isCredit,
         userId
       );
-    } else if (!foundStatement) {
-      throw new UnreversibleTransactionException();
     }
-    // find dentro de userStatements para localizar a transação por id, se existe,
-    // executar contrário de isCredit, se não existe, retornar erro
   }
 }
