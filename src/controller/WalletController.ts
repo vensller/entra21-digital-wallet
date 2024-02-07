@@ -129,7 +129,7 @@ export class WalletController {
       const createdAtTransaction: moment.Moment = moment(
         foundStatement.createdAt
       );
-      const expiredTransaction = moment().subtract(1, "days");
+      const expiredTransaction = moment().subtract(7, "days");
 
       if (createdAtTransaction.isBefore(expiredTransaction)) {
         throw new ExpiredTransactionException();
