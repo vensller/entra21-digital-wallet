@@ -23,4 +23,6 @@ export class WalletTransaction {
   createdAt: Date;
   @ManyToOne(() => User, (user) => user.transactions)
   user: User;
+  @Column({default: false})
+  isReversed: boolean;
 }

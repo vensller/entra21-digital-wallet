@@ -8,7 +8,7 @@ import {
   AuthenticationMiddleware,
 } from "./middleware/AuthenticationMiddleware";
 import { BaseHttpException } from "./exceptions/BaseHttpException";
-import RouteExecutor from "./routes/RouteExecutor";
+import "express-async-errors";
 
 const SERVER_PORT = 3000;
 const server = express();
@@ -16,39 +16,30 @@ server.use(express.json());
 
 server.post(
   "/login",
-  (request: Request, response: Response, next: NextFunction) =>
-    RouteExecutor(
-      request,
-      response,
-      next,
-      async (request: Request, response: Response) => {
-        const sessionController = new SessionController();
-        const token = await sessionController.login(
-          request.body.email,
-          request.body.password
-        );
-        return response.status(200).json({
-          token,
-        });
-      }
-    )
+  async (request: Request, response: Response, next: NextFunction) => {
+    const sessionController = new SessionController();
+    const token = await sessionController.login(
+      request.body.email,
+      request.body.password
+    );
+    return response.status(200).json({
+      token,
+    });
+  }
 );
 
-server.post("/user", async (request: Request, response: Response) => {
-  const userController = new UserController();
-  try {
+server.post(
+  "/user",
+  async (request: Request, response: Response, next: NextFunction) => {
+    const userController = new UserController();
     const user = await userController.createUser(
       request.body.name,
       request.body.email,
       request.body.password
     );
     return response.status(201).json(user);
-  } catch (e) {
-    return response.status(400).json({
-      error: e.message,
-    });
   }
-});
+);
 
 server.use(new AuthenticationMiddleware().validateAuthentication);
 
@@ -56,7 +47,6 @@ server.post(
   "/wallet/transaction",
   async (request: AuthenticatedRequest, response: Response) => {
     const userId = request.userId;
-
     const walletController = new WalletController();
     const transaction = await walletController.createTransaction(
       request.body.currency,
@@ -84,6 +74,17 @@ server.get(
     const userId = request.userId;
     const walletController = new WalletController();
     const amoutBRL = await walletController.getAmount(userId);
+    return response.status(200).json(amoutBRL);
+  }
+);
+
+server.post(
+  "/wallet/:id/reverse",
+  async (request: AuthenticatedRequest, response: Response) => {
+    const userId = request.userId;
+    const id = Number(request.params.id);
+    const walletController = new WalletController();
+    const amoutBRL = await walletController.reverseTransaction(userId, id);
     return response.status(200).json(amoutBRL);
   }
 );
