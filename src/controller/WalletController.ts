@@ -9,6 +9,7 @@ import { NonavailableCurrencyException } from "../exceptions/NonavailableCurrenc
 import { UnauthorizedTransactionException } from "../exceptions/UnauthorizedTransactionException";
 import { get } from "http";
 import { UnauthorizedRefoundException } from "../exceptions/UnauthorizedRefoundException";
+import moment from "moment";
 
 export class WalletController {
   async fetchExchangeRates(currency: string) {
@@ -122,12 +123,18 @@ export class WalletController {
       (WalletTransaction) => WalletTransaction.id == transactionId
     );
     if (!foundTransaction) {
-      throw new UnauthorizedRefoundException();
+      throw new UnauthorizedRefoundException("");
     }
     if (foundTransaction.isRefound == true) {
-      throw new UnauthorizedRefoundException();
+      throw new UnauthorizedRefoundException("Transação já estornada");
     }
     if (foundTransaction && !foundTransaction.isRefound) {
+      const transactionDate: moment.Moment = moment(foundTransaction.createdAt);
+      const expiredTransaction = moment().subtract(0, "days");
+
+      if(transactionDate.isBefore(expiredTransaction)){
+        throw new UnauthorizedRefoundException("Transação foi feita há mais de 7 dias");
+      }
       foundTransaction.isRefound = true;
       const transactionRepository =
         AppDataSource.getRepository(WalletTransaction);
@@ -140,6 +147,7 @@ export class WalletController {
         userId
       );
     }
+    
   }
 }
 
