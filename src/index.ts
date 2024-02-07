@@ -9,6 +9,7 @@ import {
 } from "./middleware/AuthenticationMiddleware";
 import { BaseHttpException } from "./exceptions/BaseHttpException";
 import "express-async-errors";
+import { request } from "http";
 
 const SERVER_PORT = 3000;
 const server = express();
@@ -78,6 +79,17 @@ server.get(
     const userId = request.userId;
     const walletController = new WalletController();
     const amoutBRL = await walletController.getAmount(userId);
+    return response.status(200).json(amoutBRL);
+  }
+);
+
+server.post(
+  "/wallet/:id/refound",
+  async (request: AuthenticatedRequest, response: Response) => {
+    const userId = request.userId;
+    const transactionId = Number(request.params.id);
+    const walletController = new WalletController();
+    const amoutBRL = await walletController.refoundTransaction(userId, transactionId);
     return response.status(200).json(amoutBRL);
   }
 );
