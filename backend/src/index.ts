@@ -9,10 +9,12 @@ import {
 } from "./middleware/AuthenticationMiddleware";
 import { BaseHttpException } from "./exceptions/BaseHttpException";
 import RouteExecutor from "./routes/RouteExecutor";
+import cors from "cors";
 
 const SERVER_PORT = 3000;
 const server = express();
 server.use(express.json());
+server.use(cors());
 
 server.post(
   "/login",
